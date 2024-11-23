@@ -1,0 +1,39 @@
+###
+ # @Author: jltu && jltu.siat.ac.cn, 1620808124@qq.com
+ # @Date: 2024-08-04 17:04:59
+ # @LastEditTime: 2024-08-06 16:19:48
+ # @FilePath: /cpgrid/example/twophase/buckley_leverett/optionsfile
+ # @Description: 
+ # 
+### 
+#physical parameters
+# -dt 172800
+-dt 86400
+-phi 0.2
+#-t_end 86400000
+-n_steps 10
+-beta 2
+-mu_w 0.002
+-mu_o 0.003
+-srw 0.0
+-srn 0.2
+-p_out 1.e5
+-f_in  1.15741e-7     # (5e-4 pv/day[Injection rate]) * 100[Calculation area 1D] * 0.2[phi] / (24 * 3600)[s]
+#-f_in 3.47222e-7     # (5e-4 pv/day[Injection rate]) * 300[Calculation area 1D] * 0.2[phi] / (24 * 3600)[s]
+
+#solver parameters
+-snes_type newtonls 
+-snes_linesearch_type basic
+-ksp_type gmres 
+-pc_type asm
+-snes_atol 1e-7
+-ksp_monitor
+-snes_monitor
+#-snes_linsearch_type bt
+
+-snes_fd
+#-snes_view 
+-snes_converged_reason 
+-snes_rtol 1e-6
+-mat_type aij
+-snes_max_it 10

@@ -1,0 +1,29 @@
+# 忽略所有的编译生成文件
+*.o
+*.log
+
+# 忽略特定目录
+# node_modules/
+# build/
+~/.cache/
+
+# 忽略临时文件
+*.tmp
+*.swp
+
+# 忽略环境配置文件
+.env
+
+*.e
+*.msh
+*.o
+*.Ds_Store
+*.png
+*.vtu
+#*.csv
+*.pdf
+*.m
+*.eps
+
+# 忽略文本文件
+*.txt

@@ -1,0 +1,45 @@
+###
+ # @Author: jltu && jltu.siat.ac.cn, 1620808124@qq.com
+ # @Date: 2024-08-04 17:04:59
+ # @LastEditTime: 2024-08-06 16:19:48
+ # @FilePath: /cpgrid/example/twophase/buckley_leverett/optionsfile
+ # @Description: 
+ # 
+### 
+#physical parameters
+-mesh_name mesh_0.5_8
+
+-time_order 1
+-case_name convergence_test
+-dt 0.0001            # Time step (s), default is 86400.0
+-n_steps 100          # Number of time steps, default is 10
+-phi 0.8              # Porosity, default is 0.2
+-beta 2.0             # Some parameter beta, default is 2.0
+-mu_w 1.0           # Viscosity of water (Pa.s), default is 0.002
+-mu_o 2.0           # Viscosity of oil (Pa.s), default is 0.003
+-srw 0.0              # Residual water saturation, default is 0.0
+-srn 0.0              # Residual non-wetting phase saturation, default is 0.2
+-rho_w 1000         # Density of water (kg/m^3), default is 1000.0
+-cf_w 1.e-12             # Compressibility factor of water, default is 0.0
+-rho_o 1000            # Density of oil (kg/m^3), default is 0.0
+-cf_o 0.0             # Compressibility factor of oil, default is 0.0
+-ref_pw 0.0           # Reference pressure for water, default is 0.0
+-ref_po 0.0           # Reference pressure for oil, default is 0.0
+-Bc 1.0               # Capillary pressure coefficient, default is 0.0
+
+#solver parameters
+-snes_type newtonls 
+-snes_atol 1.e-10 
+-snes_rtol 1.e-6 
+-ksp_type gmres 
+-ksp_atol 1.e-8 
+-ksp_rtol 1.e-5 
+-ksp_gmres_restart 30 
+-ksp_pc_side right 
+-pc_type asm 
+-pc_asm_type restrict 
+-pc_asm_overlap 1 
+-sub_ksp_type preonly 
+-sub_pc_type lu 
+-snes_monitor 
+-ksp_monitor

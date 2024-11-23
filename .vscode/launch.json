@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Program",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/example/twophase/buckley_leverett/twophase",
+            "args": ["-options_file", "optionsfile"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/example/twophase/buckley_leverett",
+            "environment": [],
+            "externalConsole": false,  // 使用外部控制台来启动 MPI 程序
+            "MIMode": "lldb",
+            "internalConsoleOptions": "openOnSessionStart"
+        }
+    ]
+}

@@ -1,0 +1,53 @@
+# input_file
+# Setting parameters for two-phase flow problem of oil and water
+
+# time setting parameters
+p_order = 1
+s_order = 1
+time_format = bdf1
+dt = 86400
+time_steps = 1200
+N = 200                 # Write out every Nth timestep to file.
+is_adaptive_dt = false
+
+# mesh parameter
+mesh_file = libmesh_generate 
+K_form = symmetrical
+case_name = bl2d
+dim = 2
+nx = 60
+ny = 40
+nz = 0
+xmin = 0.
+xmax = 300.
+ymin = 0.
+ymax = 200.
+zmin = 0.
+zmax = 0.
+
+# physical parameters
+read_poro = false
+read_perm = false
+output_perm_poro = false
+beta = 2                # Relative permeability
+rho_w = 1000
+rho_n = 1000
+mu_w = 2.e-3            # Viscosity of wetting in Pa.s, 1cP=10-3Pa·s
+mu_n = 3.e-3            # Viscosity of oil in Pa.s
+srw = 0.0               # wetting residual saturation
+srn = 0.2               # non-wetting saturation
+Bc = 0.                 # Capillary coefficient
+
+# the num p_out bc in this case
+p_out_num = 1 
+p_out_1 = 1             # p_out id
+p_out_1_var = 1.e5
+f_in_num = 1
+f_in_1 = 3              # f_in id
+f_in_1_var = 3.47222e-7 # 5e-4PV 5e-4*300*0.2/(24*3600);
+
+# stable parameters
+sigma = 10              # penalty parameter
+sup = 0.8               # Upper boundary saturation
+sdown = 0.0             # Lower boundary saturation
+epsilon = 0
