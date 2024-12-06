@@ -40,7 +40,7 @@ Here m = n = 1;
 PetscErrorCode FormFunction(SNES, Vec, Vec, void *);
 PetscErrorCode FormInitialGuess(SNES, Vec, void *);
 PetscErrorCode FormJacobian(SNES, Vec, Mat, Mat, void *);
-PetscErrorCode FormComputeExact(SNES, Vec , void *);
+PetscErrorCode FormComputeExact(SNES nes, Vec , void *);
 int main(int argc, char **argv)
 {
   PetscErrorCode ierr;

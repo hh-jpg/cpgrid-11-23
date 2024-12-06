@@ -6,8 +6,11 @@
 div(grad p) = f,  0 < x,y < 1
      with
        forcing function f = -cos(m*pi*x),
-       Neuman boundary conditions
-        dp/dx = 0 for x = 0, x = 1.
+       Boundary conditions
+        dp/dx = 0 for x = 0, 
+        p(1) = 1/(pi^2).
+       不能两个都是Neumann条件的，因为那样不能保证解的唯一性！！！
+
 The exact solution is \frac{1}{(m^2)\pi^2}\cos(m\pi x)
 Here m = n = 1;
 
@@ -37,7 +40,8 @@ Here m = n = 1;
 PetscErrorCode ComputeRHS(KSP , Vec , void *);
 PetscErrorCode FormFunction(SNES, Vec, Vec, void *);
 PetscErrorCode FormInitialGuess(SNES, Vec, void *);
-PetscErrorCode FormJacobian(KSP, Mat, Mat, void *);
+// PetscErrorCode FormJacobian(KSP, Mat, Mat, void *);
+PetscErrorCode FormJacobian(SNES, Vec, Mat, Mat, void *);
 PetscErrorCode FormComputeExact(SNES nes, Vec , void *);
 int main(int argc, char **argv)
 {
@@ -100,9 +104,13 @@ int main(int argc, char **argv)
   // PetscViewerASCIIOpen(PETSC_COMM_WORLD, "resinit.m", &viewer);
   // VecView(res, viewer);
 
-  // Mat j;
-  // sys.create_mat(j);
-  // PetscCall(SNESSetJacobian(snes, j, j, FormJacobian, NULL));
+  Mat j,jpre;
+  sys.create_mat(j);
+  PetscCall(SNESSetJacobian(snes, j, j, FormJacobian, NULL));
+  
+  PetscCall(SNESGetJacobian(snes, &j, &jpre, NULL, NULL));
+  // 计算雅可比矩阵
+  PetscCall(SNESComputeJacobian(snes, x, j, jpre));
 
   // 从命令行选项设置 SNES
   PetscCall(SNESSetFromOptions(snes));
@@ -113,14 +121,30 @@ int main(int argc, char **argv)
   KSP ksp;
   SNESGetKSP(snes,&ksp);
   KSPSetUp(ksp);
-  PetscCall(KSPSetComputeRHS(ksp, ComputeRHS, NULL));
-  PetscCall(KSPSetComputeOperators(ksp,FormJacobian , NULL));
+  // PetscCall(KSPSetComputeOperators(ksp,FormJacobian , NULL));
   PetscCall(KSPSetFromOptions(ksp));
-  PetscCall(KSPSolve(ksp, NULL, x));
+  PetscCall(KSPSetOperators(ksp, j, jpre)); // 使用 J 和 Jpre 作为操作矩阵
 
-
-
-
+    // 创建右端项向量b和解向量x
+    PetscScalar  value;
+    // 逐点填充右端项b（这里假设b(x) = ）
+    for (PetscInt i = 0; i < 100; i++) {
+      if (i==0)
+      {
+        value = 1.157407407407407e-07;    // 根据坐标计算右端项的值
+      }else if (i==99)
+      {
+        value = 6.579488444773420e-08;    // 根据坐标计算右端项的值
+      }else
+      {
+        value = 0.0;
+      }
+        ierr = VecSetValue(res, i, value, INSERT_VALUES);CHKERRQ(ierr);
+    }
+    // 汇总右端项向量b
+    ierr = VecAssemblyBegin(res);CHKERRQ(ierr);
+    ierr = VecAssemblyEnd(res);CHKERRQ(ierr);
+  PetscCall(KSPSolve(ksp, res, x));
 
   // // 获取并保存解
   // PetscCall(SNESGetSolution(snes, &x));
@@ -283,6 +307,10 @@ PetscErrorCode FormFunction(SNES snes, Vec x, Vec f, void *ctx)
         {
           f_array[p_dof] +=  face.compute_efftrans(1) / perm * (p + 1/(pi*pi));
         }
+        // else if (face.pos() == 0)
+        // {
+        //   f_array[p_dof] +=  face.compute_efftrans(1) / perm * (p - 1/(pi*pi));
+        // }
       }
       else
       {
@@ -304,7 +332,7 @@ PetscErrorCode FormFunction(SNES snes, Vec x, Vec f, void *ctx)
   PetscCall(VecDestroy(&x_local));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
-
+/*
 PetscErrorCode FormJacobian(KSP ksp,  Mat J, Mat jac, void *ctx)
 {
   PetscFunctionBeginUser;
@@ -370,7 +398,77 @@ PetscErrorCode FormJacobian(KSP ksp,  Mat J, Mat jac, void *ctx)
   PetscCall(MatNullSpaceDestroy(&nullspace));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
+*/
+PetscErrorCode FormJacobian(SNES snes, Vec x, Mat jac, Mat B, void *ctx)
+{
+  PetscFunctionBeginUser;
+  DM dm_cp;
+  PetscCall(MatZeroEntries(jac));
+  System *sys;
+  Vec x_local, x_old_local;
+  PetscScalar *x_array;
+  PetscErrorCode ierr;
 
+  // 获取DM和System
+  PetscCall(SNESGetDM(snes, &dm_cp));
+  PetscCall(DMCPGetSystem_CP(dm_cp, sys));
+
+  // 获取系统的DofMap和Mesh
+  DofMap &dof_map = sys->dof_map();
+  Mesh &mesh = sys->get_mesh();
+  // 获取变量编号
+  int p_var = dof_map.variable_num("p");
+
+  // 将全局向量转换为局部向量
+  const std::vector<unsigned int> &ghosted_index = dof_map.get_send_list();
+  sys->create_local_vec(&x_local);
+  VecDuplicate(x_local, &x_old_local);
+  PetscCall(globalvec_to_local(x, ghosted_index, &x_local));
+  // 获取向量数组
+  PetscCall(VecGetArray(x_local, &x_array));
+
+  for (const Polyhedron &e : mesh.elem_local_range())
+  {
+    PetscScalar Kpp = 0.0, Kps = 0.0, Ksp = 0.0, Kss = 0.0;
+    int p_dof = dof_map.dof_local_indices(e, p_var);
+    int p_g_dof = dof_map.dof_indices(e, p_var);
+    PetscScalar e_volume = e.compute_cell_volume();
+    double perm = e.perm();
+
+    PetscScalar p = x_array[p_dof];
+    for (const Face &face : e.get_faces())
+    {
+      if (face.neighbor() == nullptr)
+      {
+        if (face.pos() == 1)
+        {
+          Kpp += face.compute_efftrans(1)/perm;
+        }
+      }
+      else
+      {
+        Polyhedron *neighbor = face.neighbor();
+        int p_n_dof = dof_map.dof_local_indices(*neighbor, p_var);
+        int p_n_g_dof = dof_map.dof_indices(*neighbor, p_var);
+        PetscScalar Kpnp = 0.0, Kpns = 0.0, Knpp = 0.0, knps = 0.0, Ksnp = 0.0, Ksns = 0.0;
+        PetscScalar p_n = x_array[p_n_dof];
+
+        Kpp += face.compute_efftrans(1)/perm;
+        Kpnp += - face.compute_efftrans(1)/perm;
+        // std::cout<<Kpnp<<" ";
+        
+        MatSetValue(jac, p_g_dof, p_n_g_dof, Kpnp, ADD_VALUES);
+      }
+    }
+    // std::cout<<Kpp<<std::endl;
+    MatSetValue(jac, p_g_dof, p_g_dof, Kpp, ADD_VALUES);
+  }
+  PetscCall(MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY));
+  PetscCall(MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY));
+  PetscCall(VecRestoreArray(x_local, &x_array));
+  PetscCall(VecDestroy(&x_local));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
 
 PetscErrorCode FormInitialGuess(SNES snes, Vec x, void *ctx)
 {
