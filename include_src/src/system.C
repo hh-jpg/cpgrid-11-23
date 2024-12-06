@@ -137,8 +137,10 @@ void transform_preallocation_arrays(const PetscInt blocksize,
 
 PetscErrorCode System::create_mat(Mat &mat)
 {
+  PetscFunctionBeginUser;
   Sparsity sp(*_dof_map);
   sp.creatmat(mat);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 Vec& System::get_old_solution()

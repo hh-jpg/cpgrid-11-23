@@ -7,33 +7,55 @@
  # 
 ### 
 #physical parameters
-# -dt 172800
 -dt 86400
 -phi 0.2
-#-t_end 86400000
--n_steps 10
+-n_steps 1
 -beta 2
 -mu_w 0.002
 -mu_o 0.003
 -srw 0.0
 -srn 0.2
 -p_out 1.e5
--f_in  1.15741e-7     # (5e-4 pv/day[Injection rate]) * 100[Calculation area 1D] * 0.2[phi] / (24 * 3600)[s]
-#-f_in 3.47222e-7     # (5e-4 pv/day[Injection rate]) * 300[Calculation area 1D] * 0.2[phi] / (24 * 3600)[s]
+-f_in  1.15740741e-07    # (5e-4 pv/day[Injection rate]) * 100[Calculation area 1D] * 0.2[phi] / (24 * 3600)[s]
 
-#solver parameters
--snes_type newtonls 
--snes_linesearch_type basic
--ksp_type gmres 
--pc_type asm
--snes_atol 1e-7
--ksp_monitor
--snes_monitor
-#-snes_linsearch_type bt
 
--snes_fd
-#-snes_view 
--snes_converged_reason 
--snes_rtol 1e-6
+# ##  solver parameters--p
+-p_snes_type newtonls 
+# # #-snes_linesearch_type basic
+# -p_snes_linesearch_type basic
+# -p_snes_atol 1e-10
+# -p_snes_rtol 1e-6
+# -p_snes_view 
+-p_snes_converged_reason 
+# # -p_snes_max_it 10
+-p_snes_monitor
+
+# -p_ksp_type preonly 
+# -p_pc_type lu
+-p_ksp_type gmres 
+-p_pc_type asm
+# -p_ksp_view
+
+-p_snes_fd
 -mat_type aij
--snes_max_it 10
+
+
+# ##  solver parameters--s
+# -s_snes_type newtonls 
+# # #-snes_linesearch_type basic
+# -s_snes_linesearch_type basic
+# -s_snes_atol 1e-10
+# -s_snes_rtol 1e-6
+# -s_snes_view 
+-s_snes_converged_reason 
+# # -s_snes_max_it 10
+-s_snes_monitor
+
+-s_ksp_type preonly 
+-s_pc_type lu
+# # #-ksp_type gmres 
+# # #-pc_type asm
+# # -s_ksp_view
+
+-s_snes_fd
+-mat_type aij

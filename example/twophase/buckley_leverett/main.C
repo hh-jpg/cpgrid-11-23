@@ -95,9 +95,10 @@ int main(int argc, char **argv)
   PetscCall(FormInitialGuess(snes, x, &sys));
 
   PetscCall(SNESSetFunction(snes, res, FormFunction, &sys));
-
+  // std::cout << "98 " <<std::endl;
   Mat j;
   sys.create_mat(j);
+  // std::cout << "101 " << std::endl;
   PetscCall(SNESSetJacobian(snes, j, j, FormJacobian, NULL));
   // 可以不写FormJacobi的具体形式，但必须要有这行，且FormJacobi得有定义，此时应该调用 -snes_fd
 

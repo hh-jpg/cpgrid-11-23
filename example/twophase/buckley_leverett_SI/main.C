@@ -121,6 +121,25 @@ int main(int argc, char **argv)
   PetscCall(SNESSetJacobian(snes_s, js, js, FormJacobian_s, &sysp));
 
   // 从命令行选项设置 SNES
+  SNESSetOptionsPrefix(snes_p, "p_");
+  SNESSetOptionsPrefix(snes_s, "s_");
+
+  // 获取 KSP 对象
+  KSP ksp_p,ksp_s;
+  SNESGetKSP(snes_p, &ksp_p);
+  KSPSetOptionsPrefix(ksp_p, "p_");
+  SNESGetKSP(snes_s, &ksp_s);
+  KSPSetOptionsPrefix(ksp_s, "s_");
+
+  // 获取 PC 对象并设置预处理器类型
+  // PC pc_p,pc_s;
+  // KSPGetPC(ksp_p, &pc_p);
+  // PCSetType(pc_p, PCLU);  // 设置为 LU 预处理器类型
+  // KSPGetPC(ksp_s, &pc_s);
+  // PCSetType(pc_s, PCLU);  // 设置为 LU 预处理器类型
+
+  PetscCall(KSPSetFromOptions(ksp_p));
+  PetscCall(KSPSetFromOptions(ksp_s));
   PetscCall(SNESSetFromOptions(snes_p));
   PetscCall(SNESSetFromOptions(snes_s));
   PetscCall(SNESSetUp(snes_p));
@@ -138,42 +157,40 @@ int main(int argc, char **argv)
     PetscPrintf(PETSC_COMM_WORLD, "\n\n*** Solving time step %d, time = %g, dt = %g ***\n", t_step, sysp.time, dt);
     sysp.time += dt;
 
+    // snprintf(filename, sizeof(filename), "./Test_output/xsini_%d.m", t_step);
+    // PetscCall(SaveVecToMatlab(xs, filename, "s"));
+
     // 保存旧的解并进行求解
     PetscPrintf(PETSC_COMM_WORLD, "----------------- snes_p -----------------\n");
     syss.set_old_solution(xs);
+
     PetscCall(SNESSolve(snes_p, NULL, xp));
     PetscCall(SNESGetSolution(snes_p, &xp));// 获取并保存解, x---p^{n+1} 、xold---S_w^{n}
-    if (t_step % 5 == 0 || t_step <=10)
+    // if (t_step % 5 == 0 || t_step <=10)
+    // {
+    // snprintf(filename, sizeof(filename), "./output/xp_%d.m", t_step);
+    // PetscCall(SaveVecToMatlab(xp, filename, "pressure"));
+    // }
+    if (t_step % 1 == 0 )
     {
-    snprintf(filename, sizeof(filename), "./output/xp_%d.m", t_step);
-    PetscCall(SaveVecToMatlab(xp, filename, "pressure"));
+    snprintf(filename, sizeof(filename), "./Test_output/xp_%d.m", t_step);
+    PetscCall(SaveVecToMatlab(xp, filename, "p"));
     }
+return 0;
 
     // 保存旧的解并进行求解
     PetscPrintf(PETSC_COMM_WORLD, "----------------- snes_s -----------------\n");
     sysp.set_old_solution(xp);
     PetscCall(SNESSolve(snes_s, NULL, xs));
     PetscCall(SNESGetSolution(snes_s, &xs));// 获取并保存解, xold---p^{n+1} 、x---S_w^{n+1}
-    if (t_step % 5 == 0 || t_step <=10)
+    if (t_step % 1 == 0 )
     {
-    snprintf(filename, sizeof(filename), "./output/xs_%d.m", t_step);
-    PetscCall(SaveVecToMatlab(xs, filename, "saturation"));
+    snprintf(filename, sizeof(filename), "./Test_output/xs_%d.m", t_step);
+    PetscCall(SaveVecToMatlab(xs, filename, "s"));
     }
-    // if (t_step % 100 == 0)
-    // {
-      // snprintf(filename, sizeof(filename), "./output/cfl_bl_solution_%d.m", t_step);
-      // PetscCall(SaveVecToMatlab(xp, filename, "p_s"));
-    // }
+// return 0;
     t_step++;
   }
-  PetscViewer viewer;
-  ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD, "xp.m", &viewer);
-  CHKERRQ(ierr);
-  VecView(xp, viewer);
-
-  ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD, "xs.m", &viewer);
-  CHKERRQ(ierr);
-  VecView(xs, viewer);
   
   // 清理资源  
   PetscCall(VecDestroy(&xp));
@@ -225,6 +242,9 @@ PetscErrorCode FormFunction_p(SNES snes, Vec p, Vec f, void *ctx)
   PetscCall(globalvec_to_local(p, ghosted_index, &p_local));
   PetscCall(globalvec_to_local(syss->get_old_solution(), ghosted_index, &s_old_local));
 
+  // PetscCall(SaveVecToMatlab(syss->get_old_solution(), "./Test_output/xsgetini.m", "s"));
+  // PetscCall(SaveVecToMatlab(s_old_local, "./Test_output/xsgetinilocal.m", "s"));
+
   // 获取向量数组
   PetscCall(VecGetArray(p_local, &p_array));
   PetscCall(VecGetArray(s_old_local, &s_old_array));
@@ -234,11 +254,12 @@ PetscErrorCode FormFunction_p(SNES snes, Vec p, Vec f, void *ctx)
   for (const Polyhedron &e : mesh.elem_local_range())
   {
     int p_dof = dof_map.dof_local_indices(e, p_var);
-    // PetscPrintf(PETSC_COMM_WORLD,"p_dof=%d\n",p_dof);
     PetscScalar e_volume = e.compute_cell_volume();
     PetscScalar p = p_array[p_dof];
     PetscScalar s = s_old_array[p_dof];
 
+    // PetscPrintf(PETSC_COMM_WORLD,"sw_%d(1)=%.5e\n",p_dof,(s));
+    // PetscPrintf(PETSC_COMM_WORLD,"p_%d(1)=%.5e\n",p_dof,(p));
     // 计算残差
     for (const Face &face : e.get_faces())
     {
@@ -247,12 +268,16 @@ PetscErrorCode FormFunction_p(SNES snes, Vec p, Vec f, void *ctx)
         if (face.pos() == 0)
         {
           f_array[p_dof] -= f_in * face.compute_face_area();
+          // PetscPrintf(PETSC_COMM_WORLD,"p_dof=%d\n",p_dof);
+          // PetscPrintf(PETSC_COMM_WORLD,"Left q =%.5e\n",f_in * face.compute_face_area());   // 1.157407407407407e-07
         }
         else if (face.pos() == 1)
         {
           PetscScalar mob_oc = fluid.func_lambda_o(s);
           PetscScalar mob_wc = fluid.func_lambda_w(s);
           f_array[p_dof] += face.compute_efftrans(mob_oc + mob_wc) * (p - p_out);
+          // PetscPrintf(PETSC_COMM_WORLD,"Right q =%.5e\n",face.compute_efftrans(mob_oc + mob_wc) * (p_out));  // 6.579488444773420e-08
+          // PetscPrintf(PETSC_COMM_WORLD,"A_%d(1)=%.5e\n",p_dof,face.compute_efftrans(mob_oc + mob_wc));
         }
       }
       else
@@ -277,6 +302,7 @@ PetscErrorCode FormFunction_p(SNES snes, Vec p, Vec f, void *ctx)
           mob_up = mob_on + mob_wn;
         }
         f_array[p_dof] += face.compute_efftrans(mob_up) * (p - p_n);
+        // PetscPrintf(PETSC_COMM_WORLD,"A_%d=%.5e\n",p_dof,face.compute_efftrans(mob_up));
       }
     }
   }
@@ -288,7 +314,6 @@ PetscErrorCode FormFunction_p(SNES snes, Vec p, Vec f, void *ctx)
   PetscCall(VecRestoreArray(f, &f_array));
   PetscCall(VecDestroy(&p_local));
   PetscCall(VecDestroy(&s_old_local));
-  // PetscPrintf(PETSC_COMM_WORLD, "1-----------------===================\n");
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -344,8 +369,8 @@ PetscErrorCode FormFunction_s(SNES snes, Vec s, Vec f, void *ctx)
     PetscScalar p = p_old_array[s_dof];
     PetscScalar s = s_array[s_dof];
     PetscScalar s_old = s_old_array[s_dof];
-   /*
-   if (s<0.0)
+    /*
+    if (s<0.0)
     {
       s=0.0;
     }else if (s>1.0)
@@ -363,11 +388,18 @@ PetscErrorCode FormFunction_s(SNES snes, Vec s, Vec f, void *ctx)
         if (face.pos() == 0)
         {
           f_array[s_dof] -= dt * f_in * face.compute_face_area();
+          // PetscPrintf(PETSC_COMM_WORLD,"q=%.6e\n",-f_in);
         }
         else if (face.pos() == 1)
         {
           PetscScalar mob_wc = fluid.func_lambda_w(s);
-          f_array[s_dof] += dt * face.compute_efftrans(mob_wc) * (p - p_out);
+          PetscScalar mob_oc = fluid.func_lambda_o(s);
+          // PetscPrintf(PETSC_COMM_WORLD,"mob_wc = %.4g, mob_oc = %.4g\n",mob_wc,mob_oc);
+          PetscScalar fw = mob_wc / (mob_wc + mob_oc);
+          PetscScalar q = face.compute_efftrans(mob_wc) * (p_out - p);
+          // PetscPrintf(PETSC_COMM_WORLD,"q=%.5g\n",q);
+          f_array[s_dof] -= dt * ( (q>0)?q:0 + ((q<0)?q:0) * fw);
+          // f_array[s_dof] += dt * face.compute_efftrans(mob_wc) * (p - p_out);
         }
       }
       else
@@ -379,15 +411,7 @@ PetscErrorCode FormFunction_s(SNES snes, Vec s, Vec f, void *ctx)
         PetscScalar p_n = p_old_array[s_n_dof];
         PetscScalar mob_wc = fluid.func_lambda_w(s);
         PetscScalar mob_wn = fluid.func_lambda_w(s_n);
-        PetscScalar mob_up;
-        if (p > p_n)
-        {
-          mob_up = mob_wc;
-        }
-        else
-        {
-          mob_up = mob_wn;
-        }
+        PetscScalar mob_up = (p > p_n) ? mob_wc : mob_wn;
         f_array[s_dof] += dt * face.compute_efftrans(mob_up) * (p - p_n);
       }
     }

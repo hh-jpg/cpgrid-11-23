@@ -1,6 +1,6 @@
 -include ../../../petscdir.mk
 
-PETSC_DIR := /home/daihuanhe/petsc-vn3.19.0
+PETSC_DIR := /home/dai/PETSc/petsc-v3.19.0
 PETSC_ARCH := arch-linux-c-debug
 # Ensure the PETSC_DIR environment variable is correctly defined.
 include ${PETSC_DIR}/lib/petsc/conf/variables
@@ -19,7 +19,7 @@ MESH_DIM ?= 2  # default 3d
 CXXFLAGS += -DMESH_DIM=$(MESH_DIM)
 
 # Define source and include directories
-CPGRID_PATH := /home/daihuanhe/reservoir_simulation/cpgrid/include_src/
+CPGRID_PATH := /home/dai/download/reservoir_simulation/cpgrid/include_src/
 MY_SRC_DIR := ${CPGRID_PATH}/src
 MY_INCLUDE_DIR := ${CPGRID_PATH}/include 
 

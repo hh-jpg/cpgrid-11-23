@@ -1,6 +1,6 @@
 -include ../../../petscdir.mk
 
-PETSC_DIR := /home/daihuanhe/petsc-vn3.19.0
+PETSC_DIR := /home/dai/PETSc/petsc-v3.19.0
 PETSC_ARCH := arch-linux-c-debug
 # Ensure the PETSC_DIR environment variable is correctly defined.
 include ${PETSC_DIR}/lib/petsc/conf/variables
@@ -15,7 +15,7 @@ FPPFLAGS :=
 MESH_DIM ?= 3  # default 3d
 
 # Define source and include directories
-CPGRID_PATH := /home/daihuanhe/reservoir_simulation/cpgrid/include_src/
+CPGRID_PATH := /home/dai/reservoir_simulation/cpgrid/include_src/
 MY_SRC_DIR := ${CPGRID_PATH}/src
 MY_INCLUDE_DIR := ${CPGRID_PATH}/include
 
@@ -36,4 +36,4 @@ $(TARGET): $(OBJS)
 
 # Clean rule to remove generated files
 clear:
-	rm -rf $(TARGET) $(OBJS) ./output/*.m  *.m *.txt
+	rm -rf $(TARGET) $(OBJS) ./Test_output/*.m  *.m *.txt

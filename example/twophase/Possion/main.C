@@ -48,7 +48,7 @@ int main(int argc, char **argv)
   PetscCall(PetscInitialize(&argc, &argv, NULL, NULL));
   // Mesh settings
   Mesh mesh;
-  std::string case_name = "possion";
+  std::string case_name = "grid_possion/possion_128";
   std::string filepath = "./grid/" + case_name;
 
   mesh.read(filepath);
@@ -128,6 +128,25 @@ int main(int argc, char **argv)
   ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD, "xexact.m", &viewer);
   CHKERRQ(ierr);
   VecView(xexact, viewer);
+
+  PetscScalar residual_x,residual_xexact,norm2,norm1,norminf;
+	ierr = VecAXPY(x,-1.0,xexact); CHKERRQ(ierr);
+	ierr = VecNorm(x,NORM_2,&residual_x);CHKERRQ(ierr);
+	ierr = VecNorm(xexact,NORM_2,&residual_xexact);CHKERRQ(ierr);
+  norm2 = residual_x / residual_xexact;
+	PetscPrintf(PETSC_COMM_WORLD,"The residual NORM_2 of solution =%.5e\n",residual_x/residual_xexact);
+  
+  ierr = VecNorm(x,NORM_1,&residual_x);CHKERRQ(ierr);
+	ierr = VecNorm(xexact,NORM_1,&residual_xexact);CHKERRQ(ierr);
+	PetscPrintf(PETSC_COMM_WORLD,"The residual NORM_1 of solution =%.5e\n",residual_x/residual_xexact);
+  norm1 = residual_x / residual_xexact;
+
+  ierr = VecNorm(x,NORM_INFINITY,&residual_x);CHKERRQ(ierr);
+	ierr = VecNorm(xexact,NORM_INFINITY,&residual_xexact);CHKERRQ(ierr);
+	PetscPrintf(PETSC_COMM_WORLD,"The residual NORM_inf of solution =%.5e\n",residual_x/residual_xexact);
+  norminf = residual_x / residual_xexact;
+
+  PetscPrintf(PETSC_COMM_WORLD,"& %.5e &  & %.5e &  & %.5e &  \\\\ \n",norminf,norm2,norm1);
 
   // 清理资源
   PetscCall(VecDestroy(&x));
