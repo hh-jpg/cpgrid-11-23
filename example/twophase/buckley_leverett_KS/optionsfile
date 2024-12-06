@@ -1,0 +1,59 @@
+###
+ # @Author: jltu && jltu.siat.ac.cn, 1620808124@qq.com
+ # @Date: 2024-08-04 17:04:59
+ # @LastEditTime: 2024-08-06 16:19:48
+ # @FilePath: /cpgrid/example/twophase/buckley_leverett/optionsfile
+ # @Description: 
+ # 
+### 
+#physical parameters
+-dt 86400
+-phi 0.2
+-n_steps 1
+-beta 2
+-mu_w 0.002
+-mu_o 0.003
+-srw 0.0
+-srn 0.2
+-p_out 1.e5
+-f_in  1.157407407407407e-07    # (5e-4 pv/day[Injection rate]) * 100[Calculation area 1D] * 0.2[phi] / (24 * 3600)[s]
+# 为和 MRST 对齐，这里必须这么精细!!
+
+# ##  solver parameters--p
+# -ksp_type lu
+# -pc_type preonly
+# -ksp_monitor
+
+-p_ksp_type preonly   
+# -p_pc_type lu
+# -p_ksp_converged_reason
+# -p_ksp_type gmres 
+# -p_pc_type asm
+# -p_ksp_view
+-p_ksp_monitor
+
+# -p_snes_fd
+# -mat_type aij
+
+# -mat_view
+# -vec_view
+
+# ##  solver parameters--s
+-s_snes_type newtonls 
+# # #-snes_linesearch_type basic
+-s_snes_linesearch_type bt
+-s_snes_atol 1e-10
+-s_snes_rtol 1e-6
+# -s_snes_view 
+-s_snes_converged_reason 
+# # -s_snes_max_it 10
+-s_snes_monitor
+# -mat_view
+# -s_ksp_type preonly 
+# -s_pc_type lu
+# # #-ksp_type gmres 
+# # #-pc_type asm
+# # -s_ksp_view
+
+-s_snes_fd
+# -mat_type aij

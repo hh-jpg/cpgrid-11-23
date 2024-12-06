@@ -9,7 +9,7 @@
 #physical parameters
 -dt 86400
 -phi 0.2
--n_steps 1
+-n_steps 10
 -beta 2
 -mu_w 0.002
 -mu_o 0.003
@@ -30,15 +30,17 @@
 # # -p_snes_max_it 10
 -p_snes_monitor
 
-# -p_ksp_type preonly 
-# -p_pc_type lu
--p_ksp_type gmres 
--p_pc_type asm
+-p_ksp_type preonly 
+-p_pc_type lu
+# -p_ksp_type gmres 
+# -p_pc_type asm
 # -p_ksp_view
 
 -p_snes_fd
 -mat_type aij
 
+# -mat_view
+# -vec_view
 
 # ##  solver parameters--s
 # -s_snes_type newtonls 
